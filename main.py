@@ -27,12 +27,16 @@ async def main():
         async for message in app.get_chat_history(chatID):
             message: Message
             video = message.video
+            print(message)
             if video:
                 print(f"Downloading {message.id}")
-                await app.download_media(message, file_name=f"files/{message.id}")
+                
                 with open(f"files/info/{message.id}.json", "w", encoding='utf8') as f:
-                    json.dump(video.to_dict(), f, ensure_ascii=False, indent=3)
+                    json.dump(json.loads(str(message)), f, ensure_ascii=False, indent=3)
+                
+                await app.download_media(message, file_name=f"files/{message.id}")
                 await asyncio.sleep(1)
+                
                 # send the file to admin's chat
                 await app.send_document(config.ADMIN_CHAT_ID, f"files/{message.id}")
                 await app.send_document(config.ADMIN_CHAT_ID, f"files/info/{message.id}.json")
