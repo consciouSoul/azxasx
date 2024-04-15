@@ -11,7 +11,9 @@ from pyrogram import Client
 from pyrogram.types import Message
 
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
 
 
 app = Client("saveFiles", api_id=config.APP_ID, api_hash=config.API_HASH)
@@ -30,19 +32,23 @@ async def main():
             print(message)
             if video:
                 print(f"Downloading {message.id}")
-                
-                with open(f"files/info/{message.id}.json", "w", encoding='utf8') as f:
-                    json.dump(json.loads(str(message)), f, ensure_ascii=False, indent=3)
-                
+                # with open(f"files/info/{message.id}.json", "w", encoding='utf8') as f:
+                #     json.dump(json.loads(str(message)), f, ensure_ascii=False, indent=3)
+
                 await app.download_media(message, file_name=f"files/{message.id}.mp4")
                 await asyncio.sleep(1)
-                
+
                 # send the file to admin's chat
-                x = await app.send_document(config.ADMIN_CHAT_ID, f"files/{message.id}.mp4")
-                await x.reply_document(f"files/info/{message.id}.json")
+                x = await app.send_document(
+                    config.ADMIN_CHAT_ID,
+                    f"files/{message.id}.mp4",
+                    caption=message.caption,
+                    caption_entities=message.caption_entities,
+                )
+                # await x.reply_document(f"files/info/{message.id}.json")
                 os.remove(f"files/{message.id}.mp4")
-                os.remove(f"files/info/{message.id}.json")
-            
+                # os.remove(f"files/info/{message.id}.json")
+
             print(message.id)
 
 
