@@ -38,8 +38,8 @@ async def main():
                 await asyncio.sleep(1)
                 
                 # send the file to admin's chat
-                await app.send_document(config.ADMIN_CHAT_ID, f"files/{message.id}.mp4")
-                await app.send_document(config.ADMIN_CHAT_ID, f"files/info/{message.id}.json")
+                x = await app.send_document(config.ADMIN_CHAT_ID, f"files/{message.id}.mp4")
+                await x.reply_document(f"files/info/{message.id}.json")
                 os.remove(f"files/{message.id}")
             
             
