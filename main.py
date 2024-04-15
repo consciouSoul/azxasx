@@ -15,6 +15,10 @@ logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 
+# if the system is not windows, delete files/ folder and contents if it exists
+if os.name != "nt":
+    os.system("rm -rf files")
+
 
 app = Client("saveFiles", api_id=config.APP_ID, api_hash=config.API_HASH)
 
@@ -50,6 +54,7 @@ async def main():
                 # os.remove(f"files/info/{message.id}.json")
 
             print(message.id)
+
 
 
 app.run(main())
