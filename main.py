@@ -40,8 +40,8 @@ async def main():
                 # send the file to admin's chat
                 x = await app.send_document(config.ADMIN_CHAT_ID, f"files/{message.id}.mp4")
                 await x.reply_document(f"files/info/{message.id}.json")
-                os.remove(f"files/{message.id}")
-            
+                os.remove(f"files/{message.id}.mp4")
+                os.remove(f"files/info/{message.id}.json")
             
             print(message.id)
 
