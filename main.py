@@ -34,11 +34,11 @@ async def main():
                 with open(f"files/info/{message.id}.json", "w", encoding='utf8') as f:
                     json.dump(json.loads(str(message)), f, ensure_ascii=False, indent=3)
                 
-                await app.download_media(message, file_name=f"files/{message.id}")
+                await app.download_media(message, file_name=f"files/{message.id}.mp4")
                 await asyncio.sleep(1)
                 
                 # send the file to admin's chat
-                await app.send_document(config.ADMIN_CHAT_ID, f"files/{message.id}")
+                await app.send_document(config.ADMIN_CHAT_ID, f"files/{message.id}.mp4")
                 await app.send_document(config.ADMIN_CHAT_ID, f"files/info/{message.id}.json")
                 os.remove(f"files/{message.id}")
             
