@@ -27,7 +27,7 @@ if not os.path.exists("files"):
 
 
 async def main():
-    count = 0
+    count = mongodb.find_one({"_id": 1})["count"]
     start = time.time()
     async with app:
         async for message in app.get_chat_history(chatID):
@@ -55,7 +55,7 @@ async def main():
                 count += 1
                 print(f"Downloaded {count} files")
                 mongodb.update_one({"_id": 1}, {"$inc": {"count": 1}}, upsert=True)
-                if count == 5 or time.time() - start > 17 * 60:
+                if time.time() - start > 17 * 60:
                     print("Exiting...")
                     break
 
