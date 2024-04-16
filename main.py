@@ -39,12 +39,12 @@ async def main():
             if not video:
                 print(f"Skipping {message.id}")
                 continue
+
             if video:
                 if message.id in mongodb.find_one({"_id": 1})["messageIDs"]:
-                    print(f"Skipping {message.id}")
+                    print(f"Already have {message.id}")
                     continue
             
-                print(message)
                 print(f"Downloading {message.id}")
 
                 await app.download_media(message, file_name=f"files/{message.id}.mp4")
