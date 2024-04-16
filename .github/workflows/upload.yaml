@@ -1,9 +1,6 @@
 name: Upload Files
 
 on:
-  push:
-    branches:
-      - main
   workflow_dispatch:
 
 jobs:
