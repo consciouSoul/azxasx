@@ -1,23 +1,26 @@
 name: Upload Files
 
 on:
-    workflow_dispatch:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
 
 jobs:
-    build:
-        runs-on: ubuntu-latest
+  dumpData:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-        steps:
-            - name: Checkout code
-                uses: actions/checkout@v2
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.12"
+          cache: "pip"
 
-            - name: Set up Python
-                uses: actions/setup-python@v2
-                with:
-                    python-version: '3.12' # Replace with the desired Python version
+      - name: Install dependencies
+        run: pip install -U pip && pip install -r requirements.txt
 
-            - name: Install dependencies
-                run: pip install -r requirements.txt
-
-            - name: Run main.py
-                run: python main.py
+      - name: Upload files
+        run: python3 main.py
