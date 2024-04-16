@@ -33,8 +33,12 @@ async def main():
         async for message in app.get_chat_history(chatID):
             message: Message
             video = message.video
-            print(message)
             if video:
+                if message.id in mongodb.find_one({"_id": 1})["messageIDs"]:
+                    print(f"Skipping {message.id}")
+                    continue
+            
+                print(message)
                 print(f"Downloading {message.id}")
 
                 mongodb.update_one(
