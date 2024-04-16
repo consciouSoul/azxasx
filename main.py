@@ -7,8 +7,10 @@ import logging
 import asyncio
 
 
+
 from pyrogram import Client
 from database import mongodb
+from datetime import datetime
 from pyrogram.types import Message
 
 logging.basicConfig(
@@ -30,9 +32,13 @@ async def main():
     count = mongodb.find_one({"_id": 1})["count"]
     start = time.time()
     async with app:
+        # start from the beginning
         async for message in app.get_chat_history(chatID):
             message: Message
             video = message.video
+            if not video:
+                print(f"Skipping {message.id}")
+                continue
             if video:
                 if message.id in mongodb.find_one({"_id": 1})["messageIDs"]:
                     print(f"Skipping {message.id}")
@@ -40,10 +46,6 @@ async def main():
             
                 print(message)
                 print(f"Downloading {message.id}")
-
-                mongodb.update_one(
-                    {"_id": 1}, {"$push": {"messageIDs": message.id}}, upsert=True
-                )
 
                 await app.download_media(message, file_name=f"files/{message.id}.mp4")
                 await asyncio.sleep(1)
@@ -58,12 +60,12 @@ async def main():
                 os.remove(f"files/{message.id}.mp4")
                 count += 1
                 print(f"Downloaded {count} files")
+                mongodb.update_one(
+                    {"_id": 1}, {"$push": {"messageIDs": message.id}}, upsert=True
+                )
                 mongodb.update_one({"_id": 1}, {"$inc": {"count": 1}}, upsert=True)
                 if time.time() - start > 17 * 60:
                     print("Exiting...")
                     break
-
-            print(message.id)
-
 
 app.run(main())
