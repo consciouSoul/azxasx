@@ -8,16 +8,14 @@ import asyncio
 
 
 from pyrogram import Client
+from database import mongodb
 from pyrogram.types import Message
-
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 
-# if the system is not windows, delete files/ folder and contents if it exists
-if os.name != "nt":
-    os.system("rm -rf files")
+os.system("rm -rf files")
 
 
 app = Client("saveFiles", api_id=config.APP_ID, api_hash=config.API_HASH)
@@ -29,6 +27,8 @@ if not os.path.exists("files"):
 
 
 async def main():
+    count = 0
+    start = time.time()
     async with app:
         async for message in app.get_chat_history(chatID):
             message: Message
@@ -36,25 +36,30 @@ async def main():
             print(message)
             if video:
                 print(f"Downloading {message.id}")
-                # with open(f"files/info/{message.id}.json", "w", encoding='utf8') as f:
-                #     json.dump(json.loads(str(message)), f, ensure_ascii=False, indent=3)
+
+                mongodb.update_one(
+                    {"_id": 1}, {"$push": {"messageIDs": message.id}}, upsert=True
+                )
 
                 await app.download_media(message, file_name=f"files/{message.id}.mp4")
                 await asyncio.sleep(1)
 
                 # send the file to admin's chat
-                x = await app.send_document(
+                await app.send_document(
                     config.ADMIN_CHAT_ID,
                     f"files/{message.id}.mp4",
                     caption=message.caption,
                     caption_entities=message.caption_entities,
                 )
-                # await x.reply_document(f"files/info/{message.id}.json")
                 os.remove(f"files/{message.id}.mp4")
-                # os.remove(f"files/info/{message.id}.json")
+                count += 1
+                print(f"Downloaded {count} files")
+                mongodb.update_one({"_id": 1}, {"$inc": {"count": 1}}, upsert=True)
+                if count == 5 or time.time() - start > 17 * 60:
+                    print("Exiting...")
+                    break
 
             print(message.id)
-
 
 
 app.run(main())
