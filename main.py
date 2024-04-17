@@ -20,7 +20,7 @@ logging.basicConfig(
 os.system("rm -rf files")
 
 
-app = Client("saveFiles", api_id=config.APP_ID, api_hash=config.API_HASH)
+app = Client("premium", api_id=config.APP_ID, api_hash=config.API_HASH)
 
 chatID = -1002048501622
 
@@ -38,6 +38,7 @@ async def main():
             video = message.video
             if not video:
                 print(f"Skipping {message.id}")
+                await asyncio.sleep(0.5)
                 continue
 
             if video:
@@ -64,7 +65,7 @@ async def main():
                     {"_id": 1}, {"$push": {"messageIDs": message.id}}, upsert=True
                 )
                 mongodb.update_one({"_id": 1}, {"$inc": {"count": 1}}, upsert=True)
-                if time.time() - start > 17 * 60:
+                if time.time() - start > 23 * 60:
                     print("Exiting...")
                     break
 
