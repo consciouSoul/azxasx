@@ -39,27 +39,39 @@ def convert_bytes(size):
     return f"{size:.2f} {units[unit_index]}"
 
 
-def downloadProgress(current: int, total: int, startTime: int):
-    diff = time.time() - startTime
+class Timer:
+    current: int = 0
+    startTime: int = 0
+
+
+def downloadProgress(current: int, total: int):
+    diff = time.time() - Timer.startTime
     percentage = (current * 100) / total
     downloaded = convert_bytes(current)
     totalSize = convert_bytes(total)
     speed = convert_bytes(current / diff)
     eta = round((total - current) / (current / diff))
+    if time.time() - Timer.current < 1:  # update every 1 seconds
+        return
+    Timer.current = time.time()
     print(
-        f"Downloaded {percentage}% {downloaded}/{totalSize} @{speed}/s ETA: {eta} seconds"
+        f"{percentage:.2f}% Downloaded {downloaded}/{totalSize} @{speed}/s ETA: {eta} seconds"
     )
 
 
-def uploadProgress(current: int, total: int, startTime: int):
-    diff = time.time() - startTime
+def uploadProgress(current: int, total: int):
+    diff = time.time() - Timer.startTime
     percentage = (current * 100) / total
     uploaded = convert_bytes(current)
     totalSize = convert_bytes(total)
     speed = convert_bytes(current / diff)
     eta = round((total - current) / (current / diff))
+
+    if time.time() - Timer.current < 1:  # update every 1 seconds
+        return
+    Timer.current = time.time()
     print(
-        f"Uploaded {percentage}% {uploaded}/{totalSize} @{speed}/s ETA: {eta} seconds"
+        f"{percentage:.2f}% Uploaded {uploaded}/{totalSize} @{speed}/s ETA: {eta} seconds"
     )
 
 
@@ -73,7 +85,6 @@ async def main():
             video = message.video
             if not video:
                 print(f"Skipping {message.id}")
-                await asyncio.sleep(0.5)
                 continue
 
             if video:
@@ -82,30 +93,25 @@ async def main():
                     continue
 
                 print(f"Downloading {message.id}")
-                downloadStartTime = time.time()
+                Timer.startTime = time.time()
                 await app.download_media(
                     message,
                     file_name=f"files/{message.id}.mp4",
-                    progress=lambda current, total: downloadProgress(
-                        current, total, downloadStartTime
-                    ),
+                    progress=downloadProgress,
                 )
                 await asyncio.sleep(1)
 
                 print(f"Uploading {message.id}")
-                uploadStartTime = time.time()
-                # send the file to admin's chat
+                Timer.startTime = time.time()
                 await app.send_document(
                     config.ADMIN_CHAT_ID,
                     f"files/{message.id}.mp4",
                     caption=message.caption,
                     caption_entities=message.caption_entities,
-                    progress=lambda current, total: uploadProgress(
-                        current, total, uploadStartTime
-                    ),
+                    progress=uploadProgress,
                 )
-                os.remove(f"files/{message.id}.mp4")
                 count += 1
+                os.remove(f"files/{message.id}.mp4")
                 print(f"Downloaded {count} files")
                 mongodb.update_one(
                     {"_id": 1}, {"$push": {"messageIDs": message.id}}, upsert=True
