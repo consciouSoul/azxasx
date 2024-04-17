@@ -7,7 +7,6 @@ import logging
 import asyncio
 
 
-
 from pyrogram import Client
 from database import mongodb
 from datetime import datetime
@@ -28,6 +27,42 @@ if not os.path.exists("files"):
     os.makedirs("files/info")
 
 
+def convert_bytes(size):
+    # Define the units and their respective suffixes
+    units = ["B", "KB", "MB", "GB", "TB"]
+    # Calculate the appropriate unit index based on the size
+    unit_index = 0
+    while size >= 1024 and unit_index < len(units) - 1:
+        size /= 1024
+        unit_index += 1
+    # Format the size with two decimal places and the appropriate unit
+    return f"{size:.2f} {units[unit_index]}"
+
+
+def downloadProgress(current: int, total: int, startTime: int):
+    diff = time.time() - startTime
+    percentage = (current * 100) / total
+    downloaded = convert_bytes(current)
+    totalSize = convert_bytes(total)
+    speed = convert_bytes(current / diff)
+    eta = round((total - current) / (current / diff))
+    print(
+        f"Downloaded {percentage}% {downloaded}/{totalSize} @{speed}/s ETA: {eta} seconds"
+    )
+
+
+def uploadProgress(current: int, total: int, startTime: int):
+    diff = time.time() - startTime
+    percentage = (current * 100) / total
+    uploaded = convert_bytes(current)
+    totalSize = convert_bytes(total)
+    speed = convert_bytes(current / diff)
+    eta = round((total - current) / (current / diff))
+    print(
+        f"Uploaded {percentage}% {uploaded}/{totalSize} @{speed}/s ETA: {eta} seconds"
+    )
+
+
 async def main():
     count = mongodb.find_one({"_id": 1})["count"]
     start = time.time()
@@ -45,18 +80,29 @@ async def main():
                 if message.id in mongodb.find_one({"_id": 1})["messageIDs"]:
                     print(f"Already have {message.id}")
                     continue
-            
-                print(f"Downloading {message.id}")
 
-                await app.download_media(message, file_name=f"files/{message.id}.mp4")
+                print(f"Downloading {message.id}")
+                downloadStartTime = time.time()
+                await app.download_media(
+                    message,
+                    file_name=f"files/{message.id}.mp4",
+                    progress=lambda current, total: downloadProgress(
+                        current, total, downloadStartTime
+                    ),
+                )
                 await asyncio.sleep(1)
 
+                print(f"Uploading {message.id}")
+                uploadStartTime = time.time()
                 # send the file to admin's chat
                 await app.send_document(
                     config.ADMIN_CHAT_ID,
                     f"files/{message.id}.mp4",
                     caption=message.caption,
                     caption_entities=message.caption_entities,
+                    progress=lambda current, total: uploadProgress(
+                        current, total, uploadStartTime
+                    ),
                 )
                 os.remove(f"files/{message.id}.mp4")
                 count += 1
@@ -68,5 +114,6 @@ async def main():
                 if time.time() - start > 23 * 60:
                     print("Exiting...")
                     break
+
 
 app.run(main())
