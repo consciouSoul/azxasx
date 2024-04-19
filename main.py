@@ -104,7 +104,7 @@ async def main():
                 print(f"Uploading {message.id}")
                 Timer.startTime = time.time()
                 await app.send_document(
-                    config.ADMIN_CHAT_ID,
+                    config.NEW_CHANNEL_ID,
                     f"files/{message.id}.mp4",
                     caption=message.caption,
                     caption_entities=message.caption_entities,
@@ -123,3 +123,6 @@ async def main():
 
 
 app.run(main())
+loop = asyncio.get_event_loop()
+asyncio.set_event_loop(loop)
+loop.run_until_complete(main())
