@@ -44,6 +44,9 @@ for i in range(10):
         if last_data:
             del last_data["_id"]
             del last_data["url"]
+            if last_data.get("last_data"):
+                del last_data["last_data"]
+                
         
         data["last_data"] = last_data
 
