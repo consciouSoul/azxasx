@@ -1,17 +1,21 @@
-from pymongo.server_api import ServerApi
-from pymongo.mongo_client import MongoClient
+from pymongo import MongoClient
 
-uri = "mongodb+srv://Nusab19:0092100921@firstcluster.eh81nbz.mongodb.net/?retryWrites=true&w=majority&appName=FirstCluster"
 
-# Create a new client and connect to the server
-client = MongoClient(uri, server_api=ServerApi("1"))
-mongodb = client["frb"]["data"]
+class Database:
+    def __init__(self, MONGO_URI: str, db_name: str):
+        self.db = MongoClient(MONGO_URI)[db_name]
 
-# Send a ping to confirm a successful connection
-try:
-    client.admin.command("ping")
-    print("Pinged your deployment. You successfully connected to MongoDB!")
-except Exception as e:
-    print(e)
+    def getCollection(self, collection: str):
+        return self.db[collection]
 
-# mongodb.insert_one({"_id": 1, "count": 0, "messageIDs": []})
+    def insertOne(self, collection: str, data: dict):
+        return self.db[collection].insert_one(data)
+
+    def findOne(self, collection: str, query: dict):
+        return self.db[collection].find_one(query)
+
+    def find(self, collection: str, query: dict):
+        return [i for i in self.db[collection].find(query)]
+
+    def update(self, collection: str, query: dict, data: dict):
+        return self.db[collection].update_one(query, {"$set": data}, upsert=True)

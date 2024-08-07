@@ -1,128 +1,55 @@
-import os
 import time
-import json
-import time
-import config
-import logging
-import asyncio
+import httpx
+
+from database import Database
+from datetime import datetime, timezone
+
+from config import links
 
 
-from pyrogram import Client
-from database import mongodb
-from datetime import datetime
-from pyrogram.types import Message
-
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-)
-
-os.system("rm -rf files")
+ses = httpx.Client(timeout=30, follow_redirects=True)
+db = Database("mongodb+srv://Nusab19:0092100921@firstcluster.eh81nbz.mongodb.net/?retryWrites=true&w=majority&appName=FirstCluster", db_name="url-monitor")
 
 
-app = Client("premium", api_id=config.APP_ID, api_hash=config.API_HASH)
+def check(url):
+    monitored = {
+        "url": url,
+        "status": None,
+        "response_time": None,
+        "time": datetime.now(timezone.utc)
+    }
+    try:
+        start = time.time()
+        response = ses.get(url)
+        end = time.time()
+        monitored["status"] = response.status_code
+        monitored["response_time"] = (end - start) * 1000
+    except Exception as e:
+        monitored["status"] = 500
+        monitored["response_time"] = (time.time() - start) * 1000
+        monitored["error"] = str(e)
+    
+    monitored["done_at"] = datetime.now(timezone.utc)
 
-chatID = -1002048501622
-
-if not os.path.exists("files"):
-    os.makedirs("files/info")
-
-
-def convert_bytes(size):
-    # Define the units and their respective suffixes
-    units = ["B", "KB", "MB", "GB", "TB"]
-    # Calculate the appropriate unit index based on the size
-    unit_index = 0
-    while size >= 1024 and unit_index < len(units) - 1:
-        size /= 1024
-        unit_index += 1
-    # Format the size with two decimal places and the appropriate unit
-    return f"{size:.2f} {units[unit_index]}"
-
-
-class Timer:
-    current: int = 0
-    startTime: int = 0
+    return monitored
 
 
-def downloadProgress(current: int, total: int):
-    diff = time.time() - Timer.startTime
-    percentage = (current * 100) / total
-    downloaded = convert_bytes(current)
-    totalSize = convert_bytes(total)
-    speed = convert_bytes(current / diff)
-    eta = round((total - current) / (current / diff))
-    if time.time() - Timer.current < 1:  # update every 1 seconds
-        return
-    Timer.current = time.time()
-    print(
-        f"{percentage:.2f}% Downloaded {downloaded}/{totalSize} @{speed}/s ETA: {eta} seconds"
-    )
+for i in range(10):
+    for link in links:
+        if not link.startswith("http"):
+            continue
 
+        data = check(link)
+        last_data = db.findOne("data", {"url": link})
+        if last_data:
+            del last_data["_id"]
+            del last_data["url"]
+        
+        data["last_data"] = last_data
 
-def uploadProgress(current: int, total: int):
-    diff = time.time() - Timer.startTime
-    percentage = (current * 100) / total
-    uploaded = convert_bytes(current)
-    totalSize = convert_bytes(total)
-    speed = convert_bytes(current / diff)
-    eta = round((total - current) / (current / diff))
+        db.update("data", {"url": link}, data)
+        print(i+1, data)
 
-    if time.time() - Timer.current < 1:  # update every 1 seconds
-        return
-    Timer.current = time.time()
-    print(
-        f"{percentage:.2f}% Uploaded {uploaded}/{totalSize} @{speed}/s ETA: {eta} seconds"
-    )
+        time.sleep(0.5)
 
-
-async def main():
-    count = mongodb.find_one({"_id": 1})["count"]
-    start = time.time()
-    async with app:
-        # start from the beginning
-        async for message in app.get_chat_history(chatID):
-            message: Message
-            video = message.video
-            if not video:
-                print(f"Skipping {message.id}")
-                continue
-
-            if video:
-                if message.id in mongodb.find_one({"_id": 1})["messageIDs"]:
-                    print(f"Already have {message.id}")
-                    continue
-
-                print(f"Downloading {message.id}")
-                Timer.startTime = time.time()
-                await app.download_media(
-                    message,
-                    file_name=f"files/{message.id}.mp4",
-                    progress=downloadProgress,
-                )
-                await asyncio.sleep(1)
-
-                print(f"Uploading {message.id}")
-                Timer.startTime = time.time()
-                await app.send_document(
-                    config.NEW_CHANNEL_ID,
-                    f"files/{message.id}.mp4",
-                    caption=message.caption,
-                    caption_entities=message.caption_entities,
-                    progress=uploadProgress,
-                )
-                count += 1
-                os.remove(f"files/{message.id}.mp4")
-                print(f"Downloaded {count} files")
-                mongodb.update_one(
-                    {"_id": 1}, {"$push": {"messageIDs": message.id}}, upsert=True
-                )
-                mongodb.update_one({"_id": 1}, {"$inc": {"count": 1}}, upsert=True)
-                if time.time() - start > 23 * 60:
-                    print("Exiting...")
-                    break
-
-
-app.run(main())
-loop = asyncio.get_event_loop()
-asyncio.set_event_loop(loop)
-loop.run_until_complete(main())
+    time.sleep(5)

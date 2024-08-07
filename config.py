@@ -1,7 +1,13 @@
-from dotenv import load_dotenv
+links = """
+https://vivacious-zenith-parsley.glitch.me/
+https://mdc-7cbt.onrender.com/
+https://report-league.onrender.com/
 
-load_dotenv()
 
-APP_ID=25650897
-API_HASH="9a1ef2625e3afc3be978808117786ceb"
-NEW_CHANNEL_ID=-1002140289048
+https://contest-hive.vercel.app/
+https://contest-hive.vercel.app/api/all
+https://contest-hive.vercel.app/credits
+https://toph-api.onrender.com/status
+https://quranapi.pages.dev/api/1.json
+https://nusab19.pages.dev/
+""".split()
