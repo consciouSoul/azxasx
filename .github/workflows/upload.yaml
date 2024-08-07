@@ -1,4 +1,4 @@
-name: Upload Files
+name: Monitor URL
 
 on:
   workflow_dispatch:
@@ -19,5 +19,5 @@ jobs:
       - name: Install dependencies
         run: pip install -U pip && pip install -r requirements.txt
 
-      - name: Upload files
+      - name: Monitor
         run: python3 main.py
