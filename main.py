@@ -4,11 +4,11 @@ import httpx
 from database import Database
 from datetime import datetime, timezone
 
-from config import links
+from config import links, MongoURI
 
 
 ses = httpx.Client(timeout=30, follow_redirects=True)
-db = Database("mongodb+srv://Nusab19:0092100921@firstcluster.eh81nbz.mongodb.net/?retryWrites=true&w=majority&appName=FirstCluster", db_name="url-monitor")
+db = Database(MongoURI, db_name="url-monitor")
 
 
 def check(url):
@@ -48,8 +48,6 @@ for i in range(10):
         data["last_data"] = last_data
 
         db.update("data", {"url": link}, data)
-        print(i+1, data)
+        print(i+1, link)
 
-        time.sleep(0.5)
-
-    time.sleep(5)
+    time.sleep(10)

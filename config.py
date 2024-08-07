@@ -1,3 +1,10 @@
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+MongoURI = os.environ.get("MongoURI")
+
 links = """
 https://vivacious-zenith-parsley.glitch.me/
 https://mdc-7cbt.onrender.com/
