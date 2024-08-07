@@ -20,4 +20,6 @@ jobs:
         run: pip install -U pip && pip install -r requirements.txt
 
       - name: Monitor
+        env:
+          MongoURI: ${MongoURI}
         run: python3 main.py
