@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 from config import links, MongoURI
 
 
-ses = httpx.Client(timeout=30, follow_redirects=True)
+ses = httpx.Client(timeout=60, follow_redirects=True)
 db = Database(MongoURI, db_name="url-monitor")
 
 
