@@ -6,6 +6,7 @@ load_dotenv()
 MongoURI = os.environ.get("MongoURI")
 
 links = """
+https://vast-superficial-joggers.glitch.me/
 https://vivacious-zenith-parsley.glitch.me/
 https://mdc-7cbt.onrender.com/
 https://report-league.onrender.com/
